@@ -1,3 +1,3 @@
-# ts-utils
+# utility-types
 
-Some typescript utils
+Some utility types for ts

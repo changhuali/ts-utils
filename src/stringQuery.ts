@@ -1,23 +1,29 @@
-export type StringQuery<S, Q = {}> = S extends `${infer S1}&${infer S2}`
-  ? StringQuery<S2, MergeStringQuery<S1, Q>>
-  : S extends `${string}=${string}`
-  ? MergeStringQuery<S, Q>
-  : Q
+import { Exact } from './exact'
 
-type MergeStringQuery<T, U> = T extends `${infer K}=${infer V}`
-  ? K extends keyof U
-    ? MergeKVQuery<K, V, U>
-    : AddKVQuery<K, V, U>
-  : U
+type _StringQuery<Str, Result = {}> = Str extends `${infer Str1}&${infer Str2}`
+  ? _StringQuery<Str2, MergeStringQuery<Str1, Result>>
+  : Str extends `${string}=${string}`
+  ? MergeStringQuery<Str, Result>
+  : Result
 
-type MergeKVQuery<K, V, U> = {
-  [K1 in keyof U]: K1 extends K ? ArrayQueryValue<U[K1], V> : U[K1]
+type MergeStringQuery<T, Result> = T extends `${infer K}=${infer V}`
+  ? K extends keyof Result
+    ? MergeExistKV<K, V, Result>
+    : MergeNonExistKV<K, V, Result>
+  : Result
+
+type MergeExistKV<K, V, Result> = {
+  [K1 in keyof Result]: K1 extends K ? MergeArr<Result[K1], V> : Result[K1]
 }
 
-type ArrayQueryValue<T, V> = T extends any[] ? [...T, V] : [T, V]
+type MergeArr<T, V> = T extends any[] ? [...T, V] : [T, V]
 
-type AddKVQuery<K extends string, V, U> = Exact<U & { [K1 in K]: V }>
+type MergeNonExistKV<K extends string, V, Result> = Exact<
+  Result & { [K1 in K]: V }
+>
 
-type Exact<T> = { [K in keyof T]: T[K] }
+/** 为查询字符串生成类型信息 */
+export type StringQuery<S extends String> = _StringQuery<S, {}>
 
-type Query = StringQuery<'a=1&b=2&b=3&b=4'>
+// test cases
+type Query = StringQuery<'a=1&b=2&b=3&b=4&d=5'>
